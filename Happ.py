@@ -71,7 +71,7 @@ st.sidebar.title("HR SYSTEM")
 
 menu = st.sidebar.radio(
     "Navigation",
-    ["Dashboard", "Employee Management", "Attendance Reports", "Leave Management", "HR Analytics"]
+    ["Dashboard", "Attendance Reports", "Leave Management", "HR Analytics"]
 )
 
 # ==========================================================
@@ -141,15 +141,6 @@ if menu == "Dashboard":
     c2.markdown(f"<div class='card'><h2>{len(att_files)}</h2><p>Attendance Files</p></div>", unsafe_allow_html=True)
     c3.markdown(f"<div class='card'><h2>{len(leave_files)}</h2><p>Leave Files</p></div>", unsafe_allow_html=True)
 
-
-
-# ==========================================================
-# EMPLOYEE MANAGEMENT
-# ==========================================================
-
-elif menu == "Employee Management":
-
-    st.markdown('<div class="title">EMPLOYEE MANAGEMENT</div>', unsafe_allow_html=True)
 
     employees = load_employees()
 
