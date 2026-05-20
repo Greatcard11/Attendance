@@ -195,6 +195,27 @@ elif menu == "Attendance Reports":
         else:
             report_date = datetime.today().date()
 
+    # ============================================================
+    # AFTERNOON SHIFT
+    # ============================================================
+    
+    AFTERNOON_SHIFT_START = time(14, 0)   # 2:00 PM
+NIGHT_SHIFT_START = time(17, 0)       # 5:00 PM
+
+# Assign shifts
+df["Shift"] = np.select(
+    [
+        df["Time in"].dt.time >= NIGHT_SHIFT_START,
+        (df["Time in"].dt.time >= AFTERNOON_SHIFT_START) &
+        (df["Time in"].dt.time < NIGHT_SHIFT_START)
+    ],
+    [
+        "Night Shift",
+        "Afternoon Shift"
+    ],
+    default="Day Shift"
+)
+
         # =====================================================
         # SHIFT LOGIC
         # =====================================================
