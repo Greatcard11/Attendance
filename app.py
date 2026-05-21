@@ -83,7 +83,7 @@ menu = st.sidebar.radio(
         "Dashboard",
         "Attendance Reports",
         "Leave Management",
-        "HR Analytics"
+        "Attendance Analytics"
     ]
 )
 
@@ -131,7 +131,7 @@ def load_attendance(file_path):
 if menu == "Dashboard":
 
     st.markdown(
-        '<div class="title">HR DASHBOARD</div>',
+        '<div class="title">ATTENDANCE DASHBOARD</div>',
         unsafe_allow_html=True
     )
 
