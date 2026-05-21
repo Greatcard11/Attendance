@@ -192,16 +192,8 @@ elif menu == "Attendance Reports":
             st.error("Missing required columns")
             st.stop()
 
-        # =====================================================
-        # RAW ATTENDANCE FIRST
-        # =====================================================
-
         st.subheader("📋 Attendance List")
         st.dataframe(df, use_container_width=True)
-
-        # =====================================================
-        # TIME CONVERSION
-        # =====================================================
 
         df["Time in"] = pd.to_datetime(
             df["Time in"],
@@ -212,10 +204,6 @@ elif menu == "Attendance Reports":
             df["Time out"],
             errors="coerce"
         )
-
-        # =====================================================
-        # REPORT DATE FIX
-        # =====================================================
 
         if "Date" in df.columns:
             df["Date"] = pd.to_datetime(
@@ -233,10 +221,6 @@ elif menu == "Attendance Reports":
         else:
             report_date = datetime.today().date()
 
-        # =====================================================
-        # SHIFT LOGIC
-        # =====================================================
-
         NIGHT_SHIFT_START = time(17, 0)
 
         df["Shift"] = np.where(
@@ -245,18 +229,10 @@ elif menu == "Attendance Reports":
             "Day Shift"
         )
 
-        # =====================================================
-        # DAILY LATE
-        # =====================================================
-
         late = df[
             (df["Shift"] == "Day Shift") &
             (df["Time in"].dt.time > time(8, 30))
         ]
-
-        # =====================================================
-        # OVERTIME
-        # =====================================================
 
         overtime = df[
             (
@@ -269,10 +245,6 @@ elif menu == "Attendance Reports":
                 (df["Time out"].dt.time > time(8, 0))
             )
         ]
-
-        # =====================================================
-        # LEAVE EXCLUSION
-        # =====================================================
 
         staff_on_leave = set()
 
@@ -352,16 +324,10 @@ elif menu == "Attendance Reports":
         )
 
         # Employees that truly attended
-        # Must have either Time in OR Time out
         present_staff = set(
             df[
-                (
-                    df["Time in"].notna()
-                )
-                |
-                (
-                    df["Time out"].notna()
-                )
+                (df["Time in"].notna()) |
+                (df["Time out"].notna())
             ]["Name"]
             .astype(str)
             .str.strip()
@@ -414,33 +380,19 @@ elif menu == "Attendance Reports":
         )
 
         st.subheader("Latecomers")
-        st.dataframe(
-            late,
-            use_container_width=True
-        )
+        st.dataframe(late, use_container_width=True)
 
         st.subheader("Night Shift Staff")
-        st.dataframe(
-            df[df["Shift"] == "Night Shift"],
-            use_container_width=True
-        )
+        st.dataframe(df[df["Shift"] == "Night Shift"], use_container_width=True)
 
         st.subheader("Absentees")
-        st.dataframe(
-            absentees,
-            use_container_width=True
-        )
+        st.dataframe(absentees, use_container_width=True)
 
         st.subheader("Overtime")
-        st.dataframe(
-            overtime,
-            use_container_width=True
-        )
-
-
-# =========================================================
+        st.dataframe(overtime, use_container_width=True)
+        # =====================================================
 # LEAVE MANAGEMENT
-# =========================================================
+# =====================================================
 
 elif menu == "Leave Management":
 
@@ -453,10 +405,7 @@ elif menu == "Leave Management":
 
     if files:
 
-        file = st.selectbox(
-            "Select File",
-            files
-        )
+        file = st.selectbox("Select File", files)
 
         df = pd.read_csv(
             os.path.join(
@@ -484,10 +433,7 @@ elif menu == "HR Analytics":
 
     employees = load_employees()
 
-    st.metric(
-        "Total Employees",
-        len(employees)
-    )
+    st.metric("Total Employees", len(employees))
 
     emp_counts = (
         employees["Name"]
@@ -495,10 +441,7 @@ elif menu == "HR Analytics":
         .reset_index()
     )
 
-    emp_counts.columns = [
-        "Name",
-        "Count"
-    ]
+    emp_counts.columns = ["Name", "Count"]
 
     fig = px.bar(
         emp_counts,
@@ -507,23 +450,16 @@ elif menu == "HR Analytics":
         title="Employee Distribution"
     )
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
+    st.plotly_chart(fig, use_container_width=True)
 
     # =====================================================
     # MONTHLY ATTENDANCE ANALYTICS ONLY
     # =====================================================
 
-    att_files = get_files(
-        "daily-attendance"
-    )
+    att_files = get_files("daily-attendance")
 
     if not att_files:
-        st.warning(
-            "No attendance data available for analytics"
-        )
+        st.warning("No attendance data available for analytics")
 
     else:
 
@@ -531,105 +467,47 @@ elif menu == "HR Analytics":
 
         for file in att_files:
 
-            path = os.path.join(
-                "daily-attendance",
-                file
-            )
+            path = os.path.join("daily-attendance", file)
 
             df = load_attendance(path)
 
-            if (
-                "Name" in df.columns
-                and "Time in" in df.columns
-            ):
+            if "Name" in df.columns and "Time in" in df.columns:
 
-                df["Time in"] = pd.to_datetime(
-                    df["Time in"],
-                    errors="coerce"
-                )
+                df["Time in"] = pd.to_datetime(df["Time in"], errors="coerce")
 
                 if "Date" in df.columns:
-
-                    df["Date"] = pd.to_datetime(
-                        df["Date"],
-                        errors="coerce"
-                    )
-
+                    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
                 else:
-                    df["Date"] = pd.to_datetime(
-                        "today"
-                    )
+                    df["Date"] = pd.to_datetime("today")
 
                 all_data.append(df)
-                if all_data:
 
-            df_all = pd.concat(
-                all_data,
-                ignore_index=True
-            )
+        # FIXED INDENTATION (IMPORTANT)
+        if all_data:
 
-            df_all = df_all.dropna(
-                subset=["Name", "Time in"]
-            )
+            df_all = pd.concat(all_data, ignore_index=True)
 
-            # =====================================================
-            # MONTHLY GROUPING ONLY
-            # =====================================================
+            df_all = df_all.dropna(subset=["Name", "Time in"])
 
-            df_all["Month"] = (
-                df_all["Date"]
-                .dt.to_period("M")
-                .astype(str)
-            )
+            df_all["Month"] = df_all["Date"].dt.to_period("M").astype(str)
 
-            monthly_summary = (
-                df_all
-                .groupby("Name")
-                .agg(
-                    Total_Days=(
-                        "Name",
-                        "count"
-                    ),
-                    On_Time_Days=(
-                        "Time in",
-                        lambda x: (
-                            x.dt.time
-                            <= time(8, 30)
-                        ).sum()
-                    )
-                )
-                .reset_index()
-            )
+            monthly_summary = df_all.groupby("Name").agg(
+                Total_Days=("Name", "count"),
+                On_Time_Days=("Time in", lambda x: (x.dt.time <= time(8, 30)).sum())
+            ).reset_index()
 
-            monthly_summary[
-                "Punctuality (%)"
-            ] = (
-                monthly_summary[
-                    "On_Time_Days"
-                ]
-                /
-                monthly_summary[
-                    "Total_Days"
-                ]
-                * 100
+            monthly_summary["Punctuality (%)"] = (
+                monthly_summary["On_Time_Days"] /
+                monthly_summary["Total_Days"] * 100
             ).round(2)
 
-            monthly_summary = (
-                monthly_summary
-                .sort_values(
-                    by="Punctuality (%)",
-                    ascending=False
-                )
+            monthly_summary = monthly_summary.sort_values(
+                by="Punctuality (%)",
+                ascending=False
             )
 
-            st.subheader(
-                "📅 Monthly Performance Ranking"
-            )
-
-            st.dataframe(
-                monthly_summary,
-                use_container_width=True
-            )
+            st.subheader("📅 Monthly Performance Ranking")
+            st.dataframe(monthly_summary, use_container_width=True)
 
             fig = px.bar(
                 monthly_summary.head(10),
@@ -638,12 +516,7 @@ elif menu == "HR Analytics":
                 title="Top Monthly Performers"
             )
 
-            st.plotly_chart(
-                fig,
-                use_container_width=True
-            )
+            st.plotly_chart(fig, use_container_width=True)
 
         else:
-            st.warning(
-                "No valid attendance data found"
-            )
+            st.warning("No valid attendance data found")
