@@ -252,12 +252,79 @@ elif menu == "Attendance Reports":
         # ABSENTEES
         # =====================================================
 
-        employees = set(load_employees()["Name"].astype(str))
-        attended = set(df["Name"].astype(str))
+        # =====================================================
+# ABSENTEES
+# =====================================================
 
-        absentees = pd.DataFrame({
-            "Name": list(employees - attended - staff_on_leave)
-        })
+employees_df = load_employees()
+
+# Clean employee names
+employees_df["Name"] = (
+    employees_df["Name"]
+    .astype(str)
+    .str.strip()
+)
+
+# Clean attendance names
+df["Name"] = (
+    df["Name"]
+    .astype(str)
+    .str.strip()
+)
+
+# Staff on approved leave
+staff_on_leave = set(
+    pd.Series(list(staff_on_leave))
+    .astype(str)
+    .str.strip()
+    .str.lower()
+)
+
+# Employees that truly attended
+# Must have either Time in OR Time out
+present_staff = set(
+    df[
+        (
+            df["Time in"].notna()
+        )
+        |
+        (
+            df["Time out"].notna()
+        )
+    ]["Name"]
+    .astype(str)
+    .str.strip()
+    .str.lower()
+)
+
+# All employees
+all_staff = set(
+    employees_df["Name"]
+    .astype(str)
+    .str.strip()
+    .str.lower()
+)
+
+# Absentees
+absent_names = (
+    all_staff
+    - present_staff
+    - staff_on_leave
+)
+
+# Display proper names
+absentees = pd.DataFrame({
+    "Name": [
+        name
+        for name in employees_df["Name"]
+        if (
+            str(name)
+            .strip()
+            .lower()
+            in absent_names
+        )
+    ]
+})
 
         # =====================================================
         # SUMMARY
