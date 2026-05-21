@@ -561,7 +561,7 @@ elif menu == "HR Analytics":
                     )
 
                 all_data.append(df)
-                        if all_data:
+                if all_data:
 
             df_all = pd.concat(
                 all_data,
