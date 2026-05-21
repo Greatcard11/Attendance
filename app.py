@@ -441,24 +441,57 @@ elif menu == "Attendance Reports":
         # ABSENTEES
         # =====================================================
 
-        employees = set(
-            load_employees()["Name"]
-            .astype(str)
-        )
+        # =====================================================
+# ABSENTEES
+# =====================================================
 
-        attended = set(
-            df["Name"]
-            .astype(str)
-        )
+# Clean employee names
+employees_df = load_employees()
 
-        absentees = pd.DataFrame({
-            "Name": list(
-                employees
-                - attended
-                - staff_on_leave
-            )
-        })
+employees = set(
+    employees_df["Name"]
+    .astype(str)
+    .str.strip()
+    .str.lower()
+)
 
+# Clean attended names
+attended = set(
+    df["Name"]
+    .astype(str)
+    .str.strip()
+    .str.lower()
+)
+
+# Clean leave names
+staff_on_leave = set(
+    pd.Series(list(staff_on_leave))
+    .astype(str)
+    .str.strip()
+    .str.lower()
+)
+
+# Get absentee names
+absent_names = (
+    employees
+    - attended
+    - staff_on_leave
+)
+
+# Convert back to proper display names
+original_names = (
+    employees_df["Name"]
+    .astype(str)
+    .str.strip()
+)
+
+absentees = pd.DataFrame({
+    "Name": [
+        name for name in original_names
+        if name.strip().lower()
+        in absent_names
+    ]
+})
         # =====================================================
         # SUMMARY
         # =====================================================
