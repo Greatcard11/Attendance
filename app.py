@@ -33,7 +33,10 @@ employee_file = "employee.csv"
 # =========================================================
 
 if not os.path.exists(employee_file):
-    pd.DataFrame({"Name": []}).to_csv(employee_file, index=False)
+    pd.DataFrame({"Name": []}).to_csv(
+        employee_file,
+        index=False
+    )
 
 
 # =========================================================
@@ -43,7 +46,9 @@ if not os.path.exists(employee_file):
 st.markdown("""
 <style>
 
-.stApp { background-color: white; }
+.stApp {
+    background-color: white;
+}
 
 section[data-testid="stSidebar"] {
     background-color: black;
@@ -83,7 +88,7 @@ menu = st.sidebar.radio(
         "Dashboard",
         "Attendance Reports",
         "Leave Management",
-        "Attendance Analytics"
+        "HR Analytics"
     ]
 )
 
@@ -94,7 +99,11 @@ menu = st.sidebar.radio(
 
 def load_employees():
     df = pd.read_csv(employee_file)
-    df.columns = df.columns.str.strip()
+
+    df.columns = (
+        df.columns
+        .str.strip()
+    )
 
     if "Name" not in df.columns:
         df["Name"] = ""
@@ -103,12 +112,21 @@ def load_employees():
 
 
 def get_files(folder):
-    return [f for f in os.listdir(folder) if f.endswith(".csv")]
+    return [
+        f for f in os.listdir(folder)
+        if f.endswith(".csv")
+    ]
 
 
 def load_attendance(file_path):
+
     df = pd.read_csv(file_path)
-    df.columns = df.columns.str.strip().str.lower()
+
+    df.columns = (
+        df.columns
+        .str.strip()
+        .str.lower()
+    )
 
     df = df.rename(columns={
         "name": "Name",
@@ -125,7 +143,7 @@ def load_attendance(file_path):
 
 
 # =========================================================
-# DASHBOARD (ONLY SUMMARY)
+# DASHBOARD
 # =========================================================
 
 if menu == "Dashboard":
@@ -142,29 +160,52 @@ if menu == "Dashboard":
     c1, c2, c3 = st.columns(3)
 
     c1.markdown(
-        f"<div class='card'><h2>{len(employees)}</h2><p>Employees</p></div>",
+        f"""
+        <div class='card'>
+            <h2>{len(employees)}</h2>
+            <p>Employees</p>
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
     c2.markdown(
-        f"<div class='card'><h2>{len(att_files)}</h2><p>Attendance Files</p></div>",
+        f"""
+        <div class='card'>
+            <h2>{len(att_files)}</h2>
+            <p>Attendance Files</p>
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
     c3.markdown(
-        f"<div class='card'><h2>{len(leave_files)}</h2><p>Leave Files</p></div></div>",
+        f"""
+        <div class='card'>
+            <h2>{len(leave_files)}</h2>
+            <p>Leave Files</p>
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
-    employees.index = range(1, len(employees) + 1)
+    employees.index = range(
+        1,
+        len(employees) + 1
+    )
+
     employees.index.name = "S/N"
 
     st.subheader("Employees")
-    st.dataframe(employees, use_container_width=True)
+
+    st.dataframe(
+        employees,
+        use_container_width=True
+    )
 
 
 # =========================================================
-# ATTENDANCE REPORTS (DAILY ANALYTICS ONLY)
+# ATTENDANCE REPORTS
 # =========================================================
 
 elif menu == "Attendance Reports":
@@ -174,26 +215,56 @@ elif menu == "Attendance Reports":
         unsafe_allow_html=True
     )
 
-    files = get_files("daily-attendance")
+    files = get_files(
+        "daily-attendance"
+    )
 
     if not files:
-        st.warning("No attendance files found")
+        st.warning(
+            "No attendance files found"
+        )
 
     else:
 
-        file = st.selectbox("Select File", files)
-        path = os.path.join("daily-attendance", file)
+        file = st.selectbox(
+            "Select File",
+            files
+        )
+
+        path = os.path.join(
+            "daily-attendance",
+            file
+        )
 
         df = load_attendance(path)
 
-        required = ["Name", "Time in", "Time out"]
+        required = [
+            "Name",
+            "Time in",
+            "Time out"
+        ]
 
-        if any(c not in df.columns for c in required):
-            st.error("Missing required columns")
+        if any(
+            c not in df.columns
+            for c in required
+        ):
+            st.error(
+                "Missing required columns"
+            )
             st.stop()
 
-        st.subheader("📋 Attendance List")
-        st.dataframe(df, use_container_width=True)
+        st.subheader(
+            "📋 Attendance List"
+        )
+
+        st.dataframe(
+            df,
+            use_container_width=True
+        )
+
+        # =====================================================
+        # TIME CONVERSIONS
+        # =====================================================
 
         df["Time in"] = pd.to_datetime(
             df["Time in"],
@@ -205,7 +276,12 @@ elif menu == "Attendance Reports":
             errors="coerce"
         )
 
+        # =====================================================
+        # DATE
+        # =====================================================
+
         if "Date" in df.columns:
+
             df["Date"] = pd.to_datetime(
                 df["Date"],
                 errors="coerce"
@@ -219,36 +295,85 @@ elif menu == "Attendance Reports":
             )
 
         else:
-            report_date = datetime.today().date()
+            report_date = (
+                datetime.today()
+                .date()
+            )
 
-        NIGHT_SHIFT_START = time(17, 0)
+        # =====================================================
+        # SHIFT
+        # =====================================================
+
+        NIGHT_SHIFT_START = time(
+            17,
+            0
+        )
 
         df["Shift"] = np.where(
-            df["Time in"].dt.time >= NIGHT_SHIFT_START,
+            df["Time in"].dt.time
+            >= NIGHT_SHIFT_START,
             "Night Shift",
             "Day Shift"
         )
 
+        # =====================================================
+        # LATE STAFF
+        # =====================================================
+
         late = df[
-            (df["Shift"] == "Day Shift") &
-            (df["Time in"].dt.time > time(8, 30))
+            (
+                df["Shift"]
+                == "Day Shift"
+            )
+            &
+            (
+                df["Time in"]
+                .dt.time
+                > time(8, 30)
+            )
         ]
+
+        # =====================================================
+        # OVERTIME
+        # =====================================================
 
         overtime = df[
             (
-                (df["Shift"] == "Day Shift") &
-                (df["Time out"].dt.time > time(19, 0))
+                (
+                    df["Shift"]
+                    == "Day Shift"
+                )
+                &
+                (
+                    df["Time out"]
+                    .dt.time
+                    > time(19, 0)
+                )
             )
             |
             (
-                (df["Shift"] == "Night Shift") &
-                (df["Time out"].dt.time > time(8, 0))
+                (
+                    df["Shift"]
+                    == "Night Shift"
+                )
+                &
+                (
+                    df["Time out"]
+                    .dt.time
+                    > time(8, 0)
+                )
             )
         ]
 
+        # =====================================================
+        # LEAVE FILES
+        # =====================================================
+
         staff_on_leave = set()
 
-        leave_files = get_files("leave-management")
+        leave_files = get_files(
+            "leave-management"
+        )
 
         for lf in leave_files:
 
@@ -264,21 +389,28 @@ elif menu == "Attendance Reports":
                 "Start Date",
                 "End Date",
                 "Status"
-            }.issubset(leave_df.columns):
+            }.issubset(
+                leave_df.columns
+            ):
 
-                leave_df["Start Date"] = pd.to_datetime(
-                    leave_df["Start Date"]
-                ).dt.date
+                leave_df["Start Date"] = (
+                    pd.to_datetime(
+                        leave_df["Start Date"]
+                    ).dt.date
+                )
 
-                leave_df["End Date"] = pd.to_datetime(
-                    leave_df["End Date"]
-                ).dt.date
+                leave_df["End Date"] = (
+                    pd.to_datetime(
+                        leave_df["End Date"]
+                    ).dt.date
+                )
 
                 approved = leave_df[
                     (
                         leave_df["Status"]
                         .str.lower()
-                        .str.strip() == "approved"
+                        .str.strip()
+                        == "approved"
                     )
                     &
                     (
@@ -293,10 +425,12 @@ elif menu == "Attendance Reports":
                 ]
 
                 staff_on_leave.update(
-                    approved["Name"].astype(str)
+                    approved["Name"]
+                    .astype(str)
                 )
                         # =====================================================
         # ABSENTEES
+        # ONLY STAFF WITHOUT TIME IN = ABSENT
         # =====================================================
 
         employees_df = load_employees()
@@ -315,53 +449,78 @@ elif menu == "Attendance Reports":
             .str.strip()
         )
 
-        # Staff on approved leave
+        # Ensure Time in is datetime
+        df["Time in"] = pd.to_datetime(
+            df["Time in"],
+            errors="coerce"
+        )
+
+        # =====================================================
+        # STAFF ON APPROVED LEAVE
+        # =====================================================
+
         staff_on_leave = set(
-            pd.Series(list(staff_on_leave))
+            pd.Series(
+                list(staff_on_leave)
+            )
             .astype(str)
             .str.strip()
             .str.lower()
         )
 
-        # Employees that truly attended
+        # =====================================================
+        # STAFF WITH VALID TIME IN = PRESENT
+        # =====================================================
+
         present_staff = set(
             df[
-                (df["Time in"].notna()) |
-                (df["Time out"].notna())
+                df["Time in"].notna()
             ]["Name"]
             .astype(str)
             .str.strip()
             .str.lower()
+            .unique()
         )
 
-        # All employees
+        # =====================================================
+        # ALL EMPLOYEES
+        # =====================================================
+
         all_staff = set(
             employees_df["Name"]
             .astype(str)
             .str.strip()
             .str.lower()
+            .unique()
         )
 
-        # Absentees
+        # =====================================================
+        # ABSENTEES
+        # NO TIME IN = ABSENT
+        # EXCLUDING APPROVED LEAVE
+        # =====================================================
+
         absent_names = (
             all_staff
             - present_staff
             - staff_on_leave
         )
 
-        # Display proper names
-        absentees = pd.DataFrame({
-            "Name": [
-                name
-                for name in employees_df["Name"]
-                if (
-                    str(name)
-                    .strip()
-                    .lower()
-                    in absent_names
-                )
-            ]
-        })
+        # =====================================================
+        # DISPLAY ABSENTEES
+        # =====================================================
+
+        absentees = employees_df[
+            employees_df["Name"]
+            .str.strip()
+            .str.lower()
+            .isin(absent_names)
+        ][["Name"]].drop_duplicates()
+
+        absentees.reset_index(
+            drop=True,
+            inplace=True
+        )
 
         # =====================================================
         # SUMMARY
@@ -371,28 +530,78 @@ elif menu == "Attendance Reports":
 
         c1, c2, c3, c4 = st.columns(4)
 
-        c1.metric("Late", len(late))
-        c2.metric("Absent", len(absentees))
-        c3.metric("Overtime", len(overtime))
-        c4.metric(
-            "Night Shift",
-            len(df[df["Shift"] == "Night Shift"])
+        c1.metric(
+            "Late",
+            len(late)
         )
 
-        st.subheader("Latecomers")
-        st.dataframe(late, use_container_width=True)
+        c2.metric(
+            "Absent",
+            len(absentees)
+        )
 
-        st.subheader("Night Shift Staff")
-        st.dataframe(df[df["Shift"] == "Night Shift"], use_container_width=True)
+        c3.metric(
+            "Overtime",
+            len(overtime)
+        )
 
-        st.subheader("Absentees")
-        st.dataframe(absentees, use_container_width=True)
+        c4.metric(
+            "Night Shift",
+            len(
+                df[
+                    df["Shift"]
+                    == "Night Shift"
+                ]
+            )
+        )
 
-        st.subheader("Overtime")
-        st.dataframe(overtime, use_container_width=True)
         # =====================================================
+        # TABLES
+        # =====================================================
+
+        st.subheader(
+            "Latecomers"
+        )
+
+        st.dataframe(
+            late,
+            use_container_width=True
+        )
+
+        st.subheader(
+            "Night Shift Staff"
+        )
+
+        st.dataframe(
+            df[
+                df["Shift"]
+                == "Night Shift"
+            ],
+            use_container_width=True
+        )
+
+        st.subheader(
+            "Absentees"
+        )
+
+        st.dataframe(
+            absentees,
+            use_container_width=True
+        )
+
+        st.subheader(
+            "Overtime"
+        )
+
+        st.dataframe(
+            overtime,
+            use_container_width=True
+        )
+
+
+# =========================================================
 # LEAVE MANAGEMENT
-# =====================================================
+# =========================================================
 
 elif menu == "Leave Management":
 
@@ -401,11 +610,16 @@ elif menu == "Leave Management":
         unsafe_allow_html=True
     )
 
-    files = get_files("leave-management")
+    files = get_files(
+        "leave-management"
+    )
 
     if files:
 
-        file = st.selectbox("Select File", files)
+        file = st.selectbox(
+            "Select File",
+            files
+        )
 
         df = pd.read_csv(
             os.path.join(
@@ -414,15 +628,20 @@ elif menu == "Leave Management":
             )
         )
 
-        st.dataframe(df)
+        st.dataframe(
+            df,
+            use_container_width=True
+        )
 
     else:
-        st.warning("No leave data found")
+        st.warning(
+            "No leave data found"
+        )
 
 
-# =======================================
-# HR ANALYTICS (MONTHLY ONLY)
-# =======================================
+# =========================================================
+# HR ANALYTICS
+# =========================================================
 
 elif menu == "HR Analytics":
 
