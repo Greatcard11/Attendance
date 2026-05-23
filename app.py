@@ -433,33 +433,23 @@ elif menu == "HR Analytics":
 
     employees = load_employees()
 
-    st.metric("Total Employees", len(employees))
-
-    emp_counts = (
-        employees["Name"]
-        .value_counts()
-        .reset_index()
+    st.metric(
+        "Total Employees",
+        len(employees)
     )
 
-    emp_counts.columns = ["Name", "Count"]
+    # =====================================================
+    # LOAD ATTENDANCE FILES
+    # =====================================================
 
-    fig = px.bar(
-        emp_counts,
-        x="Name",
-        y="Count",
-        title="Employee Distribution"
+    att_files = get_files(
+        "daily-attendance"
     )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    # =====================================================
-    # MONTHLY ATTENDANCE ANALYTICS ONLY
-    # =====================================================
-
-    att_files = get_files("daily-attendance")
 
     if not att_files:
-        st.warning("No attendance data available for analytics")
+        st.warning(
+            "No attendance data available"
+        )
 
     else:
 
@@ -467,47 +457,224 @@ elif menu == "HR Analytics":
 
         for file in att_files:
 
-            path = os.path.join("daily-attendance", file)
+            path = os.path.join(
+                "daily-attendance",
+                file
+            )
 
-            df = load_attendance(path)
+            try:
 
-            if "Name" in df.columns and "Time in" in df.columns:
+                df = load_attendance(
+                    path
+                )
 
-                df["Time in"] = pd.to_datetime(df["Time in"], errors="coerce")
+                # Ensure required columns exist
+                if (
+                    "Name"
+                    not in df.columns
+                    or
+                    "Time in"
+                    not in df.columns
+                ):
+                    continue
 
+                # Clean employee names
+                df["Name"] = (
+                    df["Name"]
+                    .astype(str)
+                    .str.strip()
+                )
+
+                # Remove empty names
+                df = df[
+                    df["Name"]
+                    .notna()
+                ]
+
+                # Convert Time in
+                df["Time in"] = (
+                    pd.to_datetime(
+                        df["Time in"],
+                        errors="coerce"
+                    )
+                )
+
+                # Fix date
                 if "Date" in df.columns:
-                    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+
+                    df["Date"] = (
+                        pd.to_datetime(
+                            df["Date"],
+                            errors="coerce"
+                        )
+                    )
+
                 else:
-                    df["Date"] = pd.to_datetime("today")
+                    df["Date"] = (
+                        pd.Timestamp.today()
+                    )
 
                 all_data.append(df)
 
-        # FIXED INDENTATION (IMPORTANT)
-        if all_data:
+            except Exception as e:
 
-            df_all = pd.concat(all_data, ignore_index=True)
+                st.warning(
+                    f"Could not read {file}: {e}"
+                )
+                        # =====================================================
+        # CHECK DATA EXISTS
+        # =====================================================
 
-            df_all = df_all.dropna(subset=["Name", "Time in"])
+        if len(all_data) == 0:
 
-            df_all["Month"] = df_all["Date"].dt.to_period("M").astype(str)
-
-            monthly_summary = df_all.groupby("Name").agg(
-                Total_Days=("Name", "count"),
-                On_Time_Days=("Time in", lambda x: (x.dt.time <= time(8, 30)).sum())
-            ).reset_index()
-
-            monthly_summary["Punctuality (%)"] = (
-                monthly_summary["On_Time_Days"] /
-                monthly_summary["Total_Days"] * 100
-            ).round(2)
-
-            monthly_summary = monthly_summary.sort_values(
-                by="Punctuality (%)",
-                ascending=False
+            st.error(
+                "No valid attendance data found"
             )
 
-            st.subheader("📅 Monthly Performance Ranking")
-            st.dataframe(monthly_summary, use_container_width=True)
+        else:
+
+            df_all = pd.concat(
+                all_data,
+                ignore_index=True
+            )
+
+            # Remove invalid records
+            df_all = df_all.dropna(
+                subset=[
+                    "Name",
+                    "Time in"
+                ]
+            )
+
+            if df_all.empty:
+
+                st.error(
+                    "Attendance data loaded but Time in column is invalid."
+                )
+
+                st.stop()
+
+            # =====================================================
+            # MONTH COLUMN
+            # =====================================================
+
+            df_all["Month"] = (
+                df_all["Date"]
+                .dt.to_period("M")
+                .astype(str)
+            )
+
+            # =====================================================
+            # LATE CALCULATION
+            # =====================================================
+
+            LATE_TIME = time(
+                8,
+                30
+            )
+
+            df_all["Late"] = (
+                df_all["Time in"]
+                .dt.time
+                > LATE_TIME
+            )
+
+            # =====================================================
+            # MONTHLY SUMMARY
+            # =====================================================
+
+            monthly_summary = (
+                df_all
+                .groupby("Name")
+                .agg(
+                    Total_Days=(
+                        "Name",
+                        "count"
+                    ),
+                    Late_Count=(
+                        "Late",
+                        "sum"
+                    ),
+                    On_Time_Days=(
+                        "Late",
+                        lambda x: (
+                            ~x
+                        ).sum()
+                    )
+                )
+                .reset_index()
+            )
+
+            monthly_summary[
+                "Punctuality (%)"
+            ] = (
+                monthly_summary[
+                    "On_Time_Days"
+                ]
+                /
+                monthly_summary[
+                    "Total_Days"
+                ]
+                * 100
+            ).round(2)
+
+            monthly_summary = (
+                monthly_summary
+                .sort_values(
+                    by="Punctuality (%)",
+                    ascending=False
+                )
+            )
+
+            # =====================================================
+            # DASHBOARD METRICS
+            # =====================================================
+
+            c1, c2, c3 = st.columns(3)
+
+            c1.metric(
+                "Employees Tracked",
+                len(
+                    monthly_summary
+                )
+            )
+
+            c2.metric(
+                "Total Late Records",
+                int(
+                    monthly_summary[
+                        "Late_Count"
+                    ].sum()
+                )
+            )
+
+            c3.metric(
+                "Late > 5 Times",
+                len(
+                    monthly_summary[
+                        monthly_summary[
+                            "Late_Count"
+                        ] > 5
+                    ]
+                )
+            )
+
+            # =====================================================
+            # PERFORMANCE TABLE
+            # =====================================================
+
+            st.subheader(
+                "📅 Monthly Performance Ranking"
+            )
+
+            st.dataframe(
+                monthly_summary,
+                use_container_width=True
+            )
+
+            # =====================================================
+            # TOP PERFORMERS
+            # =====================================================
 
             fig = px.bar(
                 monthly_summary.head(10),
@@ -516,7 +683,54 @@ elif menu == "HR Analytics":
                 title="Top Monthly Performers"
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
 
-        else:
-            st.warning("No valid attendance data found")
+            # =====================================================
+            # STAFF LATE > 5 TIMES
+            # =====================================================
+
+            late_staff = (
+                monthly_summary[
+                    monthly_summary[
+                        "Late_Count"
+                    ] > 5
+                ]
+            )
+
+            st.subheader(
+                "⚠ Employees Late More Than 5 Times"
+            )
+
+            if late_staff.empty:
+
+                st.success(
+                    "No employee has been late more than 5 times."
+                )
+
+            else:
+
+                st.dataframe(
+                    late_staff[
+                        [
+                            "Name",
+                            "Late_Count",
+                            "Punctuality (%)"
+                        ]
+                    ],
+                    use_container_width=True
+                )
+
+                fig = px.bar(
+                    late_staff,
+                    x="Name",
+                    y="Late_Count",
+                    title="Late More Than 5 Times"
+                )
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
