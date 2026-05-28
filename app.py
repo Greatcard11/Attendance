@@ -942,7 +942,9 @@ elif menu == "HR Analytics":
                     late_staff,
                     x="Name",
                     y="Late_Count",
-                    title="Late More Than 5 Times"
+                    title="Late More Than 5 Times",
+                    color="Late_Count",
+                    color_continuous_scale="Reds"
                 )
 
                 st.plotly_chart(
