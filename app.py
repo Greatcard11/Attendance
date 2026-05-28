@@ -767,6 +767,20 @@ elif menu == "HR Analytics":
             )
 
             # =====================================================
+            # MONTH FILTER
+            # =====================================================
+
+            available_months = sorted(df_all["Month"].dropna().unique(), reverse=True)
+
+            selected_month = st.selectbox(
+                "Select Month",
+                ["All"] + available_months
+            )
+
+            if selected_month != "All":
+                df_all = df_all[df_all["Month"] == selected_month]
+                
+            # =====================================================
             # LATE CALCULATION
             # =====================================================
 
