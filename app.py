@@ -895,7 +895,7 @@ elif menu == "HR Analytics":
                 monthly_summary.head(10),
                 x="Name",
                 y="Punctuality (%)",
-                title="Top Monthly Performers"
+                title="Top Monthly Performers",
 
                 color="Punctuality (%)",
                 color_continuous_scale="Blues"
