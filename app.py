@@ -305,17 +305,12 @@ elif menu == "Attendance Reports":
         # SHIFT
         # =====================================================
 
-        DAY_SHIFT_END = time(13, 0)
-        NIGHT_SHIFT_START = time(17, 0)
+        AFTERNOON_NIGHT_SHIFT_START = time(13, 0, 0)
 
         df["Shift"] = np.where(
-            df["Time in"].dt.time >= NIGHT_SHIFT_START,
-            "Night Shift",
-        np.where(
-            df["Time in"].dt.time >= DAY_SHIFT_END,
-            "Afternoon Shift",
+            df["Time in"].dt.time >= AFTERNOON_NIGHT_SHIFT_START,
+            "Afternoon/Night Shift",
             "Day Shift"
-        )
         )
         
 
@@ -341,31 +336,16 @@ elif menu == "Attendance Reports":
         # =====================================================
 
         overtime = df[
-            (
-                (
-                    df["Shift"]
-                    == "Day Shift"
-                )
-                &
-                (
-                    df["Time out"]
-                    .dt.time
-                    > time(19, 0)
-                )
-            )
-            |
-            (
-                (
-                    df["Shift"]
-                    == "Afternoon/Night Shift"
-                )
-                &
-                (
-                    df["Time out"]
-                    .dt.time
-                    > time(8, 0)
-                )
-            )
+        (
+            df["Shift"]
+            == "Day Shift"
+        )
+        &
+        (
+            df["Time out"]
+            .dt.time
+            > time(19, 0)
+        )
         ]
 
         # =====================================================
@@ -431,7 +411,7 @@ elif menu == "Attendance Reports":
                     approved["Name"]
                     .astype(str)
                 )
-                        # =====================================================
+        # =====================================================
         # ABSENTEES
         # ONLY STAFF WITHOUT TIME IN = ABSENT
         # =====================================================
@@ -549,11 +529,11 @@ elif menu == "Attendance Reports":
         )
 
         c4.metric(
-            "Night Shift",
+            "Afternoon/Night Shift",
             len(
                 df[
                     df["Shift"]
-                    == "Night Shift"
+                    == "Afternoon/Night Shift"
                 ]
             )
         )
@@ -896,8 +876,7 @@ elif menu == "HR Analytics":
 
             # =====================================================
             # TOP PERFORMERS
-            # =====================================================
-
+            # =======================
             fig = px.bar(
                 monthly_summary.head(10),
                 x="Name",
