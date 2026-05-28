@@ -305,18 +305,19 @@ elif menu == "Attendance Reports":
         # SHIFT
         # =====================================================
 
-        DAY_SHIFT_END = time(13, 0)
-        NIGHT_SHIFT_START = time(17, 0)
+        AFTERNOON_NIGHT_SHIFT_START = time(
+            13,
+            0,
+            0
+        )
 
-        df["Shift"] = np.where(
-            df["Time in"].dt.time >= NIGHT_SHIFT_START,
-            "Night Shift",
-        np.where(
-            df["Time in"].dt.time >= DAY_SHIFT_END,
-            "Afternoon Shift",
-            "Day Shift"
-        )
-        )
+       df["Shift"] = np.where(
+           df["Time in"].dt.time
+           >= AFTERNOON_NIGHT_SHIFT_START,
+           "Afternoon/Night Shift",
+           "Day Shift"
+       )
+        
 
         # =====================================================
         # LATE STAFF
