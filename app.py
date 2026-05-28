@@ -357,7 +357,7 @@ elif menu == "Attendance Reports":
             (
                 (
                     df["Shift"]
-                    == "Night Shift"
+                    == "Afternoon/Night Shift"
                 )
                 &
                 (
@@ -572,13 +572,13 @@ elif menu == "Attendance Reports":
         )
 
         st.subheader(
-            "Night Shift Staff"
+            "Afternoon/Night Shift"
         )
 
         st.dataframe(
             df[
                 df["Shift"]
-                == "Night Shift"
+                == "Afternoon/Night Shift"
             ],
             use_container_width=True
         )
