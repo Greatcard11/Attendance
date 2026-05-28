@@ -896,13 +896,13 @@ elif menu == "HR Analytics":
                 x="Name",
                 y="Punctuality (%)",
                 title="Top Monthly Performers"
+
+                color="Punctuality (%)",
+                color_continuous_scale="Blues"
             )
 
-            st.plotly_chart(
-                fig,
-                use_container_width=True
-            )
-
+            st.plotly_chart(fig, use_container_width=True)
+            
             # =====================================================
             # STAFF LATE > 5 TIMES
             # =====================================================
