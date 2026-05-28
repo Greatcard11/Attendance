@@ -311,7 +311,8 @@ elif menu == "Attendance Reports":
             0
         )
 
-       df["Shift"] = np.where(
+       df["Shift"] = 
+       np.where(
            df["Time in"].dt.time
            >= AFTERNOON_NIGHT_SHIFT_START,
            "Afternoon/Night Shift",
