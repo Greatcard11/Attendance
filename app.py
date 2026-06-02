@@ -701,20 +701,22 @@ elif menu == "HR Analytics":
                     )
                 )
 
-                # Fix date
+                # FIXED: Proper Date handling (this is what was breaking May data)
                 if "Date" in df.columns:
 
-                    df["Date"] = (
-                        pd.to_datetime(
-                            df["Date"],
-                            errors="coerce"
-                        )
+                    df["Date"] = pd.to_datetime(
+                        df["Date"],
+                        errors="coerce",
+                        dayfirst=True
                     )
 
                 else:
-                    df["Date"] = (
-                        pd.Timestamp.today()
-                    )
+
+                    # fallback: try to extract from file name or use Time in date
+                    df["Date"] = pd.to_datetime(
+                        df["Time in"],
+                        errors="coerce"
+                    ).dt.date
 
                 all_data.append(df)
 
@@ -723,7 +725,8 @@ elif menu == "HR Analytics":
                 st.warning(
                     f"Could not read {file}: {e}"
                 )
-                        # =====================================================
+
+        # =====================================================
         # CHECK DATA EXISTS
         # =====================================================
 
@@ -744,7 +747,8 @@ elif menu == "HR Analytics":
             df_all = df_all.dropna(
                 subset=[
                     "Name",
-                    "Time in"
+                    "Time in",
+                    "Date"
                 ]
             )
 
@@ -755,6 +759,14 @@ elif menu == "HR Analytics":
                 )
 
                 st.stop()
+
+            # ENSURE DATE IS DATETIME (CRITICAL FIX)
+            df_all["Date"] = pd.to_datetime(
+                df_all["Date"],
+                errors="coerce"
+            )
+
+            df_all = df_all.dropna(subset=["Date"])
 
             # =====================================================
             # MONTH COLUMN
@@ -770,7 +782,10 @@ elif menu == "HR Analytics":
             # MONTH FILTER
             # =====================================================
 
-            available_months = sorted(df_all["Month"].dropna().unique(), reverse=True)
+            available_months = sorted(
+                df_all["Month"].dropna().unique(),
+                reverse=True
+            )
 
             selected_month = st.selectbox(
                 "Select Month",
@@ -779,7 +794,7 @@ elif menu == "HR Analytics":
 
             if selected_month != "All":
                 df_all = df_all[df_all["Month"] == selected_month]
-                
+
             # =====================================================
             # LATE CALCULATION
             # =====================================================
@@ -890,19 +905,19 @@ elif menu == "HR Analytics":
 
             # =====================================================
             # TOP PERFORMERS
-            # =======================
+            # =====================================================
+
             fig = px.bar(
                 monthly_summary.head(10),
                 x="Name",
                 y="Punctuality (%)",
                 title="Top Monthly Performers",
-
                 color="Punctuality (%)",
                 color_continuous_scale="Blues"
             )
 
             st.plotly_chart(fig, use_container_width=True)
-            
+
             # =====================================================
             # STAFF LATE > 5 TIMES
             # =====================================================
