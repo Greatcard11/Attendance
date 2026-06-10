@@ -671,17 +671,19 @@ elif menu == "HR Analytics":
     att_files = []
 
 for month in MONTHS:
-    month_folder = os.path.join(
-    "daily-attendance",
-    month
-    )
+    month_folder = os.path.join("daily-attendance", month)
+
+    if not os.path.exists(month_folder):
+        continue
 
     files = get_files(month_folder)
-    if isinstance(files, list):
-        att_files.extend(files)
 
-    if not att_files:
-        st.warning(
+    if not isinstance(files, list):
+        continue
+
+    for f in files:
+        if isinstance(f, str) and f.endswith(".csv"):
+            att_files.append(os.path.join(month_folder, f))
             "No attendance data available"
         )
 
