@@ -589,6 +589,7 @@ elif menu == "HR Analytics":
         by="Punctuality (%)",
         ascending=False
     )
+    
     if analysis_mode == "Monthly Analytics":
 
     st.subheader("📊 Monthly Breakdown")
