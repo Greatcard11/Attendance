@@ -676,9 +676,9 @@ for month in MONTHS:
     month
     )
 
-    att_files.extend(
-        get_files(month_folder)
-    )
+    files = get_files(month_folder)
+    if isinstance(files, list):
+        att_files.extend(files)
 
     if not att_files:
         st.warning(
