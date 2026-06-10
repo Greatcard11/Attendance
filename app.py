@@ -129,9 +129,12 @@ def load_employees():
 
 
 def get_files(folder):
+    if not os.path.exists(folder):
+        return []
+    
     return [
         f for f in os.listdir(folder)
-        if f.endswith(".csv")
+        if isinstance(f, str) and f.endswith(".csv")
     ]
 
 
