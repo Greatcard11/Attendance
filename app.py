@@ -591,8 +591,7 @@ elif menu == "HR Analytics":
     )
     
     if analysis_mode == "Monthly Analytics":
-
-    st.subheader("📊 Monthly Breakdown")
+        st.subheader("📊 Monthly Breakdown")
 
     monthly_breakdown = df_all.groupby(["Month", "Name"]).agg(
         Total_Days=("Name", "count"),
