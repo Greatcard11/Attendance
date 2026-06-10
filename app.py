@@ -247,10 +247,10 @@ elif menu == "Attendance Reports":
         attendance_folder
     )
 
-        file = st.selectbox(
-            "Select File",
-            files
-        )
+    file = st.selectbox(
+        "Select File",
+        files
+    )
 
         path = os.path.join(
             attendance_folder,
