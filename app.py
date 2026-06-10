@@ -252,10 +252,10 @@ elif menu == "Attendance Reports":
         files
     )
 
-        path = os.path.join(
-            attendance_folder,
-            file
-        )
+    path = os.path.join(
+        attendance_folder,
+        file
+    )
 
         df = load_attendance(path)
 
