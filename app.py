@@ -21,9 +21,26 @@ st.set_page_config(
 # =========================================================
 # FOLDERS
 # =========================================================
+# =========================================================
+# FOLDERS
+# =========================================================
 
 Path("daily-attendance").mkdir(exist_ok=True)
 Path("leave-management").mkdir(exist_ok=True)
+
+MONTHS = [
+    "January", "February", "March", "April",
+    "May", "June", "July", "August",
+    "September", "October", "November", "December"
+]
+
+for month in MONTHS:
+    Path(
+        f"daily-attendance/{month}"
+    ).mkdir(
+        parents=True,
+        exist_ok=True
+    )
 
 employee_file = "employee.csv"
 
