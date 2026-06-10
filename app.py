@@ -264,15 +264,15 @@ elif menu == "Attendance Reports":
         "Time in",
         "Time out"
     ]
-
-        if any(
-            c not in df.columns
-            for c in required
-        ):
-            st.error(
-                "Missing required columns"
-            )
-            st.stop()
+    
+    if any(
+        c not in df.columns
+        for c in required
+    ):
+        st.error(
+            "Missing required columns"
+        )
+        st.stop()
 
         st.subheader(
             "📋 Attendance List"
