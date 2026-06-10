@@ -257,7 +257,7 @@ elif menu == "Attendance Reports":
         file
     )
 
-        df = load_attendance(path)
+    df = load_attendance(path)
 
         required = [
             "Name",
