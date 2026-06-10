@@ -554,7 +554,10 @@ elif menu == "HR Analytics":
 
     available_months = sorted(df_all["Month"].unique(), reverse=True)
 
-    selected_month = st.selectbox("Select Month", ["All"] + available_months)
+    analysis_mode = st.radio(
+    "Select Analysis Mode",
+    ["All Analytics", "Monthly Analytics"]
+    )
 
     if selected_month != "All":
         df_all = df_all[df_all["Month"] == selected_month]
@@ -586,7 +589,27 @@ elif menu == "HR Analytics":
         by="Punctuality (%)",
         ascending=False
     )
+    if analysis_mode == "Monthly Analytics":
 
+    st.subheader("📊 Monthly Breakdown")
+
+    monthly_breakdown = df_all.groupby(["Month", "Name"]).agg(
+        Total_Days=("Name", "count"),
+        Late_Count=("Late", "sum")
+    ).reset_index()
+
+    monthly_breakdown["Punctuality (%)"] = (
+        (monthly_breakdown["Total_Days"] - monthly_breakdown["Late_Count"])
+        / monthly_breakdown["Total_Days"] * 100
+    ).round(2)
+
+    monthly_disp = monthly_breakdown.copy()
+    monthly_disp.reset_index(drop=True, inplace=True)
+    monthly_disp.index = monthly_disp.index + 1
+    monthly_disp.index.name = "S/N"
+
+    st.dataframe(monthly_disp, use_container_width=True)
+    
     # =====================================================
     # METRICS
     # =====================================================
