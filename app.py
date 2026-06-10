@@ -232,16 +232,20 @@ elif menu == "Attendance Reports":
         unsafe_allow_html=True
     )
 
-    files = get_files(
-        "daily-attendance"
+    selected_month = st.selectbox(
+        "Select Month",
+        MONTHS,
+        index=datetime.today().month - 1
     )
 
-    if not files:
-        st.warning(
-            "No attendance files found"
-        )
+    attendance_folder = os.path.join(
+        "daily-attendance",
+        selected_month
+    )
 
-    else:
+    files = get_files(
+        attendance_folder
+    )
 
         file = st.selectbox(
             "Select File",
@@ -249,7 +253,7 @@ elif menu == "Attendance Reports":
         )
 
         path = os.path.join(
-            "daily-attendance",
+            attendance_folder,
             file
         )
 
@@ -661,8 +665,16 @@ elif menu == "HR Analytics":
     # LOAD ATTENDANCE FILES
     # =====================================================
 
-    att_files = get_files(
-        "daily-attendance"
+    att_files = []
+
+for month in MONTHS:
+    month_folder = os.path.join(
+    "daily-attendance",
+    month
+    )
+
+    att_files.extend(
+        get_files(month_folder)
     )
 
     if not att_files:
