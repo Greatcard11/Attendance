@@ -557,41 +557,59 @@ elif menu == "HR Analytics":
     analysis_mode = st.radio(
     "Select Analysis Mode",
     ["All Analytics", "Monthly Analytics"]
+)
+
+# =====================================================
+# MONTH FILTER (ONLY FOR MONTHLY MODE)
+# =====================================================
+
+if analysis_mode == "Monthly Analytics":
+
+    selected_month = st.selectbox(
+        "Select Month",
+        available_months
     )
 
-    if selected_month != "All":
-        df_all = df_all[df_all["Month"] == selected_month]
+    df_all = df_all[df_all["Month"] == selected_month]
 
-    # =====================================================
-    # LATE CALCULATION
-    # =====================================================
 
-    LATE_TIME = time(8, 30)
+# =====================================================
+# LATE CALCULATION
+# =====================================================
 
-    df_all["Late"] = df_all["Time in"].dt.time > LATE_TIME
+LATE_TIME = time(8, 30)
 
-    # =====================================================
-    # SUMMARY
-    # =====================================================
+df_all["Late"] = df_all["Time in"].dt.time > LATE_TIME
 
-    monthly_summary = df_all.groupby("Name").agg(
-        Total_Days=("Name", "count"),
-        Late_Count=("Late", "sum"),
-        On_Time_Days=("Late", lambda x: (~x).sum())
-    ).reset_index()
 
-    monthly_summary["Punctuality (%)"] = (
-        monthly_summary["On_Time_Days"] /
-        monthly_summary["Total_Days"] * 100
-    ).round(2)
+# =====================================================
+# SUMMARY (ALL / MONTHLY)
+# =====================================================
 
-    monthly_summary = monthly_summary.sort_values(
-        by="Punctuality (%)",
-        ascending=False
-    )
-    
-    if analysis_mode == "Monthly Analytics":
-        st.subheader("📊 Monthly Breakdown")
+monthly_summary = df_all.groupby("Name").agg(
+    Total_Days=("Name", "count"),
+    Late_Count=("Late", "sum"),
+    On_Time_Days=("Late", lambda x: (~x).sum())
+).reset_index()
+
+monthly_summary["Punctuality (%)"] = (
+    monthly_summary["On_Time_Days"] /
+    monthly_summary["Total_Days"] * 100
+).round(2)
+
+monthly_summary = monthly_summary.sort_values(
+    by="Punctuality (%)",
+    ascending=False
+)
+
+
+# =====================================================
+# MONTHLY BREAKDOWN (ONLY IF SELECTED)
+# =====================================================
+
+if analysis_mode == "Monthly Analytics":
+
+    st.subheader("📊 Monthly Breakdown")
 
     monthly_breakdown = df_all.groupby(["Month", "Name"]).agg(
         Total_Days=("Name", "count"),
@@ -609,61 +627,73 @@ elif menu == "HR Analytics":
     monthly_disp.index.name = "S/N"
 
     st.dataframe(monthly_disp, use_container_width=True)
-    
-    # =====================================================
-    # METRICS
-    # =====================================================
 
-    c1, c2, c3 = st.columns(3)
 
-    c1.metric("Employees Tracked", len(monthly_summary))
-    c2.metric("Total Late Records", int(monthly_summary["Late_Count"].sum()))
-    c3.metric("Late > 5 Times", len(monthly_summary[monthly_summary["Late_Count"] > 5]))
+# =====================================================
+# METRICS
+# =====================================================
 
-    # =====================================================
-    # TABLE
-    # =====================================================
+c1, c2, c3 = st.columns(3)
 
-    st.subheader("📅 Monthly Performance Ranking")
+c1.metric("Employees Tracked", len(monthly_summary))
+c2.metric("Total Late Records", int(monthly_summary["Late_Count"].sum()))
+c3.metric(
+    "Late > 5 Times",
+    len(monthly_summary[monthly_summary["Late_Count"] > 5])
+)
 
-    st.dataframe(monthly_summary, use_container_width=True)
 
-    # =====================================================
-    # CHART
-    # =====================================================
+# =====================================================
+# MAIN TABLE
+# =====================================================
+
+st.subheader("📅 Monthly Performance Ranking")
+
+hr_disp = monthly_summary.copy()
+hr_disp.reset_index(drop=True, inplace=True)
+hr_disp.index = hr_disp.index + 1
+hr_disp.index.name = "S/N"
+
+st.dataframe(hr_disp, use_container_width=True)
+
+
+# =====================================================
+# CHART
+# =====================================================
+
+fig = px.bar(
+    monthly_summary.head(10),
+    x="Name",
+    y="Punctuality (%)",
+    title="Top Monthly Performers",
+    color="Punctuality (%)"
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+
+# =====================================================
+# LATE STAFF
+# =====================================================
+
+late_staff = monthly_summary[monthly_summary["Late_Count"] > 5]
+
+st.subheader("⚠ Employees Late More Than 5 Times")
+
+if late_staff.empty:
+    st.success("No employee has been late more than 5 times.")
+else:
+    st.dataframe(
+        late_staff[["Name", "Late_Count", "Punctuality (%)"]],
+        use_container_width=True
+    )
 
     fig = px.bar(
-        monthly_summary.head(10),
+        late_staff,
         x="Name",
-        y="Punctuality (%)",
-        title="Top Monthly Performers",
-        color="Punctuality (%)"
+        y="Late_Count",
+        title="Late More Than 5 Times",
+        color="Late_Count"
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
-    # =====================================================
-    # LATE STAFF
-    # =====================================================
-
-    late_staff = monthly_summary[monthly_summary["Late_Count"] > 5]
-
-    st.subheader("⚠ Employees Late More Than 5 Times")
-
-    if late_staff.empty:
-        st.success("No employee has been late more than 5 times.")
-    else:
-        st.dataframe(
-            late_staff[["Name", "Late_Count", "Punctuality (%)"]],
-            use_container_width=True
-        )
-
-        fig = px.bar(
-            late_staff,
-            x="Name",
-            y="Late_Count",
-            title="Late More Than 5 Times",
-            color="Late_Count"
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
