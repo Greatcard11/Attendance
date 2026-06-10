@@ -259,11 +259,11 @@ elif menu == "Attendance Reports":
 
     df = load_attendance(path)
 
-        required = [
-            "Name",
-            "Time in",
-            "Time out"
-        ]
+    required = [
+        "Name",
+        "Time in",
+        "Time out"
+    ]
 
         if any(
             c not in df.columns
