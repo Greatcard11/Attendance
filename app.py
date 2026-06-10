@@ -684,10 +684,6 @@ for month in MONTHS:
     for f in files:
         if isinstance(f, str) and f.endswith(".csv"):
             att_files.append(os.path.join(month_folder, f))
-            "No attendance data available"
-        )
-
-    else:
 
         all_data = []
 
