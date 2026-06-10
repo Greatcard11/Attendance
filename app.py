@@ -344,7 +344,7 @@ elif menu == "Attendance Reports":
         (
             df["Time out"]
             .dt.time
-            > time(19, 0)
+            > time(18, 0)
         )
         ]
 
