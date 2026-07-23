@@ -534,14 +534,14 @@ elif page == "HR Analytics":
     )
     perf["Late_Score"]        = (100 - perf["Late_Count"] * 4).clip(0, 100)
     perf["Performance_Score"] = (
-        perf["Sat_Score"]  * 0.50 +
-        perf["Day_Score"]  * 0.30 +
-        perf["Late_Score"] * 0.20
+        perf["Sat_Score"]  * 0.10 +
+        perf["Day_Score"]  * 0.90 +
+        perf["Late_Score"] * 0.00
     ).round(1)
     perf["Total_Penalty_Days"] = (
         perf["Absence_Penalty_Days"] +
         perf["Sat_Absent"] +          # each Saturday absence = 1 penalty day
-        perf["Late_Penalty_Days"]     # each lateness from 6th = 0.5 day
+        perf["Late_Penalty_Days"]     # each lateness from 6th = 1 day
     ).round(1)
     perf["Grade"] = perf["Performance_Score"].apply(
         lambda s: "🟢 Excellent" if s >= 90 else
