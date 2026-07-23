@@ -143,6 +143,21 @@ def get_approved_leaves():
 def is_rainy_day(filename):
     return "rainy day" in filename.lower()
 
+def fmt_date(d):
+    """Format a date/Timestamp as dd/mm/yy."""
+    try:
+        return pd.Timestamp(d).strftime("%d/%m/%y")
+    except Exception:
+        return str(d)
+
+def fmt_df_dates(df, cols):
+    """Return a copy of df with specified date columns formatted as dd/mm/yy strings."""
+    df = df.copy()
+    for c in cols:
+        if c in df.columns:
+            df[c] = df[c].apply(lambda d: fmt_date(d) if pd.notna(d) else "")
+    return df
+
 def get_all_attendance_files():
     files = []
     for sub in sorted(DAILY_DIR.iterdir()):
@@ -305,15 +320,15 @@ elif page == "Attendance Reports":
     disp_cols = [c for c in ["Name","Time_in","Time_out","Date","Shift"] if c in df.columns]
 
     section("Attendance List")
-    st.dataframe(df[disp_cols].reset_index(drop=True), use_container_width=True)
+    st.dataframe(fmt_df_dates(df[disp_cols].reset_index(drop=True), ["Date"]), use_container_width=True)
 
     section("Late Staff (Day Shift — after 08:30)")
     if late_df.empty: st.info("No late staff recorded.")
-    else: st.dataframe(late_df[disp_cols].reset_index(drop=True), use_container_width=True)
+    else: st.dataframe(fmt_df_dates(late_df[disp_cols].reset_index(drop=True), ["Date"]), use_container_width=True)
 
     section("Afternoon / Night Shift Staff")
     if aft_shift.empty: st.info("No afternoon/night shift staff.")
-    else: st.dataframe(aft_shift[disp_cols].reset_index(drop=True), use_container_width=True)
+    else: st.dataframe(fmt_df_dates(aft_shift[disp_cols].reset_index(drop=True), ["Date"]), use_container_width=True)
 
     section("Absentees")
     if absent_df.empty: st.success("No absentees recorded.")
@@ -321,7 +336,7 @@ elif page == "Attendance Reports":
 
     section("Overtime Staff (Time Out after 19:00)")
     if ot_df.empty: st.info("No overtime staff recorded.")
-    else: st.dataframe(ot_df[disp_cols].reset_index(drop=True), use_container_width=True)
+    else: st.dataframe(fmt_df_dates(ot_df[disp_cols].reset_index(drop=True), ["Date"]), use_container_width=True)
 
 # ════════════════════════════════════════════════════════════════════════════
 # LEAVE MANAGEMENT
@@ -480,9 +495,8 @@ elif page == "HR Analytics":
         s_leave   = sum(1 for d in all_saturdays if rec.get(d) == "leave")
         s_absent  = sum(1 for d in all_saturdays if rec.get(d) == "absent")
         s_rate    = round(s_present / s_count * 100, 1) if s_count else 0.0
-        # Score: each Saturday absence = -10 pts; perfect attendance bonus +5
-        s_score   = max(0, 100 - s_absent * 10) + (5 if s_absent == 0 and s_count > 0 else 0)
-        s_score   = min(105, s_score)
+        # Score: each Saturday absence = -10 pts; max is always 100
+        s_score   = max(0, min(100, 100 - s_absent * 10))
         # Penalty: each Saturday absence counts as 1 penalty day
         sat_rows.append({"Name": emp, "Sat_Count": s_count, "Sat_Present": s_present,
                          "Sat_Leave": s_leave, "Sat_Absent": s_absent,
@@ -534,14 +548,14 @@ elif page == "HR Analytics":
     )
     perf["Late_Score"]        = (100 - perf["Late_Count"] * 4).clip(0, 100)
     perf["Performance_Score"] = (
-        perf["Sat_Score"]  * 0.10 +
-        perf["Day_Score"]  * 0.90 +
-        perf["Late_Score"] * 0.00
-    ).round(1)
+        perf["Sat_Score"]  * 0.50 +
+        perf["Day_Score"]  * 0.30 +
+        perf["Late_Score"] * 0.20
+    ).clip(0, 100).round(1)
     perf["Total_Penalty_Days"] = (
         perf["Absence_Penalty_Days"] +
         perf["Sat_Absent"] +          # each Saturday absence = 1 penalty day
-        perf["Late_Penalty_Days"]     # each lateness from 6th = 1 day
+        perf["Late_Penalty_Days"]     # each lateness from 6th = 0.5 day
     ).round(1)
     perf["Grade"] = perf["Performance_Score"].apply(
         lambda s: "🟢 Excellent" if s >= 90 else
@@ -605,8 +619,9 @@ elif page == "HR Analytics":
     if not all_saturdays:
         st.info("No Saturdays in the selected period.")
     else:
-        chosen_sat      = st.selectbox("Select a Saturday", [str(d) for d in all_saturdays], key="sat_drill")
-        chosen_sat_date = pd.to_datetime(chosen_sat).date()
+        sat_options     = {fmt_date(d): d for d in all_saturdays}
+        chosen_sat_lbl  = st.selectbox("Select a Saturday", list(sat_options.keys()), key="sat_drill")
+        chosen_sat_date = sat_options[chosen_sat_lbl]
 
         absent_sat  = [e for e in all_emp if sat_records.get(e,{}).get(chosen_sat_date) == "absent"]
         leave_sat   = [e for e in all_emp if sat_records.get(e,{}).get(chosen_sat_date) == "leave"]
@@ -717,8 +732,8 @@ elif page == "HR Analytics":
     section("📋 Consolidated Penalty Summary")
     pen_summary = perf[perf["Total_Penalty_Days"] > 0][
         ["Name","Sat_Absent","Absent","Late_Count",
-         "Absence_Penalty_Days","Sat_Absent","Late_Penalty_Days","Total_Penalty_Days","Grade"]
-    ].rename(columns={
+         "Absence_Penalty_Days","Late_Penalty_Days","Total_Penalty_Days","Grade"]
+    ].copy().rename(columns={
         "Sat_Absent":           "Sat Absences",
         "Absent":               "Day Absences",
         "Late_Count":           "Times Late",
