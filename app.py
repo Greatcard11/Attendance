@@ -725,29 +725,3 @@ elif page == "HR Analytics":
             f'<div class="info-box">⚠️ <b>{len(late5)}</b> staff flagged for excessive lateness. '
             f'Total late penalty days: <b>{total_late_pen}</b>.</div>',
             unsafe_allow_html=True)
-
-    # ════════════════════════════════════════════════════════════════════════
-    # SECTION 7 — CONSOLIDATED PENALTY SUMMARY
-    # ════════════════════════════════════════════════════════════════════════
-    section("📋 Consolidated Penalty Summary")
-    pen_summary = perf[perf["Total_Penalty_Days"] > 0][
-        ["Name","Sat_Absent","Absent","Late_Count",
-         "Absence_Penalty_Days","Late_Penalty_Days","Total_Penalty_Days","Grade"]
-    ].copy().rename(columns={
-        "Sat_Absent":           "Sat Absences",
-        "Absent":               "Day Absences",
-        "Late_Count":           "Times Late",
-        "Absence_Penalty_Days": "Absence Pen. Days",
-        "Late_Penalty_Days":    "Late Pen. Days",
-        "Total_Penalty_Days":   "TOTAL Pen. Days"
-    }).sort_values("TOTAL Pen. Days", ascending=False).reset_index(drop=True)
-    pen_summary.index += 1; pen_summary.index.name = "S/N"
-
-    if pen_summary.empty:
-        st.success("No penalty days recorded for any staff in this period.")
-    else:
-        st.dataframe(pen_summary, use_container_width=True)
-        st.markdown(
-            f'<div class="info-box">📊 Combined penalty total across all staff: '
-            f'<b>{total_penalty}</b> days.</div>',
-            unsafe_allow_html=True)
