@@ -653,7 +653,7 @@ elif page == "HR Analytics":
     section("⏰ Staff Late 5+ Times — Penalty Calculation")
     st.markdown(
         '<div class="warn-box">📌 Penalty rule: first 5 late arrivals are tolerated. '
-        'From the <b>6th lateness onward</b>, each = <b>0.5 penalty day</b>. '
+        'From the <b>6th lateness onward</b>, each = <b>1 penalty day</b>. '
         'Saturdays are <b>excluded</b> from late tracking.</div>',
         unsafe_allow_html=True)
 
