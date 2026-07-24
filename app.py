@@ -609,42 +609,10 @@ elif page == "HR Analytics":
                 x_col="Name", y_col="Sat_Rate_%",
                 title="Saturday Attendance Rate (%)",
                 key="tog_sat_rate",
-                color_scale=[[0,"#ff6b00"],[0.5,"#ffaa55"],[1,"#22c55e"]],
+                color_scale=[[0,"#ff6b00"],[1,"#ffaa55"],[1,"#22c55e"]],
                 text_fmt="%{text}%")
 
     
-    # ════════════════════════════════════════════════════════════════════════
-    # SECTION 5 — STAFF WITH 5+ DAILY ABSENCES + PENALTY DAYS
-    # Penalty starts from the 6th absence (each excess absence = 1 penalty day)
-    # ════════════════════════════════════════════════════════════════════════
-    section("🚨 Staff Absent 5+ Times — Penalty Calculation")
-    st.markdown(
-        '<div class="warn-box">📌 Penalty rule: first 5 absences are tolerated. '
-        'From the <b>6th absence onward</b>, each additional day = <b>1 penalty day</b>.</div>',
-        unsafe_allow_html=True)
-
-    abs5 = daily_summary[daily_summary["Absent"] >= 5].sort_values(
-        "Absent", ascending=False).reset_index(drop=True)
-    abs5.index += 1; abs5.index.name = "S/N"
-
-    if abs5.empty:
-        st.success(f"No staff with 5+ absences in {period_label}.")
-    else:
-        show_toggle(abs5[["Name","Working_Days","Present","On_Leave","Absent",
-                           "Att_Rate_%","Absence_Penalty_Days"]].rename(
-                    columns={"Working_Days":"Working Days","On_Leave":"On Leave",
-                             "Att_Rate_%":"Attendance (%)","Absence_Penalty_Days":"Penalty Days"}),
-                    x_col="Name", y_col="Absence_Penalty_Days" if "Absence_Penalty_Days" in abs5.columns else "Penalty Days",
-                    title="Penalty Days",
-                    key="tog_abs_penalty",
-                    color_scale=[[0,"#ffaa55"],[1,"#8b0000"]],
-                    orient="v")
-        total_abs_pen = int(abs5["Absence_Penalty_Days"].sum())
-        st.markdown(
-            f'<div class="info-box">⚠️ <b>{len(abs5)}</b> staff flagged. '
-            f'Total absence penalty days: <b>{total_abs_pen}</b>.</div>',
-            unsafe_allow_html=True)
-
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 6 — STAFF LATE 5+ TIMES + PENALTY DAYS
     # Penalty: from 6th lateness onward, each = 0.5 penalty day
