@@ -612,56 +612,7 @@ elif page == "HR Analytics":
                 color_scale=[[0,"#ff6b00"],[0.5,"#ffaa55"],[1,"#22c55e"]],
                 text_fmt="%{text}%")
 
-    # ════════════════════════════════════════════════════════════════════════
-    # SECTION 3 — SATURDAY ABSENTEES BY DATE (drill-down)
-    # ════════════════════════════════════════════════════════════════════════
-    section("🗓️ Saturday Absentees by Date")
-    if not all_saturdays:
-        st.info("No Saturdays in the selected period.")
-    else:
-        sat_options     = {fmt_date(d): d for d in all_saturdays}
-        chosen_sat_lbl  = st.selectbox("Select a Saturday", list(sat_options.keys()), key="sat_drill")
-        chosen_sat_date = sat_options[chosen_sat_lbl]
-
-        absent_sat  = [e for e in all_emp if sat_records.get(e,{}).get(chosen_sat_date) == "absent"]
-        leave_sat   = [e for e in all_emp if sat_records.get(e,{}).get(chosen_sat_date) == "leave"]
-        present_sat = [e for e in all_emp if sat_records.get(e,{}).get(chosen_sat_date) == "present"]
-
-        ca, cb, cc = st.columns(3)
-        ca.metric("✅ Present",   len(present_sat))
-        cb.metric("🏖️ On Leave", len(leave_sat))
-        cc.metric("❌ Absent",    len(absent_sat))
-
-        if absent_sat:
-            adf = pd.DataFrame({"Name": absent_sat}).reset_index(drop=True)
-            adf.index += 1; adf.index.name = "S/N"
-            st.dataframe(adf, use_container_width=True)
-        else:
-            st.success("No absentees on this Saturday.")
-
-        if leave_sat:
-            with st.expander("Staff on approved leave this Saturday"):
-                ldf2 = pd.DataFrame({"Name": leave_sat}).reset_index(drop=True)
-                ldf2.index += 1
-                st.dataframe(ldf2, use_container_width=True)
-
-    # ════════════════════════════════════════════════════════════════════════
-    # SECTION 4 — ALL SATURDAY ABSENTEES (any absence)
-    # ════════════════════════════════════════════════════════════════════════
-    section("⚠️ Saturday Absentee Summary (all absences · 1 absence = 1 penalty day)")
-    sat_any = sat_summary[sat_summary["Sat_Absent"] >= 1].sort_values(
-        "Sat_Absent", ascending=False).reset_index(drop=True)
-
-    if sat_any.empty:
-        st.success("No Saturday absences in this period.")
-    else:
-        show_toggle(sat_any[["Name","Sat_Absent","Sat_Rate_%","Sat_Penalty_Days"]],
-                    x_col="Name", y_col="Sat_Absent",
-                    title="Saturday Absences",
-                    key="tog_sat_absent",
-                    color_scale=[[0,"#ffdd99"],[0.5,"#ff6b00"],[1,"#cc2200"]],
-                    orient="v")
-
+    
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 5 — STAFF WITH 5+ DAILY ABSENCES + PENALTY DAYS
     # Penalty starts from the 6th absence (each excess absence = 1 penalty day)
