@@ -595,23 +595,6 @@ elif page == "HR Analytics":
                 title="Performance Score",
                 key="tog_perf",
                 color_scale=[[0,"#cc2200"],[0.4,"#ff6b00"],[0.7,"#ffaa55"],[1,"#22c55e"]])
-
-    # ════════════════════════════════════════════════════════════════════════
-    # SECTION 2 — SATURDAY ATTENDANCE RANKING
-    # ════════════════════════════════════════════════════════════════════════
-    section("📅 Saturday Attendance Ranking")
-    sat_rank = sat_summary.sort_values(["Sat_Rate_%","Sat_Absent"],
-                                        ascending=[False,True]).reset_index(drop=True)
-    sat_rank.index += 1; sat_rank.index.name = "Rank"
-
-    show_toggle(sat_rank[["Name","Sat_Count","Sat_Present","Sat_Leave",
-                           "Sat_Absent","Sat_Rate_%","Sat_Score","Sat_Penalty_Days"]].reset_index(drop=True),
-                x_col="Name", y_col="Sat_Rate_%",
-                title="Saturday Attendance Rate (%)",
-                key="tog_sat_rate",
-                color_scale=[[0,"#ff6b00"],[1,"#ffaa55"],[1,"#22c55e"]],
-                text_fmt="%{text}%")
-
     
     # ════════════════════════════════════════════════════════════════════════
     # SECTION 6 — STAFF LATE 5+ TIMES + PENALTY DAYS
