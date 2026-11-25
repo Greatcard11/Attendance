@@ -285,7 +285,7 @@ elif page == "Attendance Reports":
     att_date = df["Date"].dropna().iloc[0].date() if "Date" in df.columns and not df["Date"].dropna().empty else None
 
     cutoff_shift = pd.Timestamp("1900-01-01 13:00:00")
-    cutoff_late  = pd.Timestamp("1900-01-01 08:30:00")
+    cutoff_late  = pd.Timestamp("1900-01-01 08:15:00")
     cutoff_ot    = pd.Timestamp("1900-01-01 19:00:00")
 
     def to_time_only(ts):
@@ -449,7 +449,7 @@ elif page == "HR Analytics":
     sat_records   = {n: {} for n in all_emp}
     late_records  = {n: [] for n in all_emp}   # weekdays only (no Saturdays)
 
-    CUTOFF_LATE = pd.Timestamp("1900-01-01 08:30:00")
+    CUTOFF_LATE = pd.Timestamp("1900-01-01 08:15:00")
     CUTOFF_SHIFT= pd.Timestamp("1900-01-01 13:00:00")
 
     def to_t(ts):
