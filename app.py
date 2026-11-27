@@ -322,7 +322,7 @@ elif page == "Attendance Reports":
     section("Attendance List")
     st.dataframe(fmt_df_dates(df[disp_cols].reset_index(drop=True), ["Date"]), use_container_width=True)
 
-    section("Late Staff (Day Shift — after 08:30)")
+    section("Late Staff (Day Shift — after 08:15)")
     if late_df.empty: st.info("No late staff recorded.")
     else: st.dataframe(fmt_df_dates(late_df[disp_cols].reset_index(drop=True), ["Date"]), use_container_width=True)
 
